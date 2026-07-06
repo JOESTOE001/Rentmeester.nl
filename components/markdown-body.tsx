@@ -8,7 +8,7 @@ interface MarkdownBodyProps {
 
 /**
  * Rendert markdown + HTML (bijv. <strong>, <em>) veilig.
- * Gebruik voor body-tekst uit content/aanbod/*.md
+ * Gebruik voor body-tekst uit markdown-content (bijv. referenties)
  */
 export function MarkdownBody({ content, className = "" }: MarkdownBodyProps) {
   if (!content.trim()) return null

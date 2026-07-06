@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0 --webpack",
-    "build": "node scripts/ensure-content.mjs && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "scrape-aanbod": "node scripts/scrape-aanbod.mjs",
     "scrape-projecten": "node scripts/scrape-projecten.mjs"
   },
   "dependencies": {

@@ -15,7 +15,6 @@ check_file() { [ -f "$1" ] || { echo "  MISSING file: $1"; MISSING=1; }; }
 
 echo "--- Verplichte mappen ---"
 check_dir "content"
-check_dir "content/aanbod"
 check_dir "data"
 check_dir "lib"
 check_dir "public"
@@ -30,25 +29,13 @@ check_file "package.json"
 check_file "next.config.mjs"
 check_file "postcss.config.mjs"
 check_file "tsconfig.json"
-check_file "data/aanbod.ts"
 check_file "data/projecten.ts"
 check_file "data/nieuws.ts"
-check_file "lib/aanbod.ts"
-check_file "lib/aanbod-content.ts"
+check_file "lib/landeigenaar.ts"
 check_file "lib/services.ts"
 check_file "lib/utils.ts"
 check_file "components/navigation.tsx"
 check_file "components/footer.tsx"
-echo ""
-
-echo "--- Content (aanbod .md) ---"
-MD_COUNT=$(find content/aanbod -maxdepth 1 -name "*.md" 2>/dev/null | wc -l)
-if [ "$MD_COUNT" -eq 0 ]; then
-  echo "  MISSING: geen .md bestanden in content/aanbod/"
-  MISSING=1
-else
-  echo "  OK: $MD_COUNT .md bestanden in content/aanbod/"
-fi
 echo ""
 
 echo "--- Build-output (na npm run build) ---"

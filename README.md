@@ -8,7 +8,8 @@ Website voor het tonen en beheren van vastgoedaanbod (percelen, bouwkavels, woni
 - **React 19**
 - **Tailwind CSS**
 - **TypeScript**
-- Content: Markdown in `content/aanbod/` en `content/projecten/`
+- Aanbod: live uit de LandEigenaar API (`lib/landeigenaar.ts`, opgehaald tijdens de build)
+- Overige content: Markdown in `content/`
 
 ## Projectstructuur
 
@@ -17,11 +18,9 @@ Website voor het tonen en beheren van vastgoedaanbod (percelen, bouwkavels, woni
 ├── src/
 │   ├── app/              # Next.js App Router (aanbod, projecten, etc.)
 │   ├── components/       # UI-componenten
-│   └── lib/              # Utilities en helpers
-├── content/
-│   ├── aanbod/           # Markdown per aanboditem
-│   └── projecten/        # Markdown per project
-├── scripts/              # Scrape-scripts (aanbod, projecten)
+│   └── lib/              # Utilities en helpers (o.a. landeigenaar.ts)
+├── content/              # Markdown-content (projecten e.d.)
+├── scripts/              # Scrape-scripts (projecten)
 └── public/
 ```
 
@@ -33,7 +32,6 @@ Website voor het tonen en beheren van vastgoedaanbod (percelen, bouwkavels, woni
 | `npm run dev` | Start dev-server op `localhost:3000` |
 | `npm run build` | Bouwt productie-build |
 | `npm run start` | Start productieserver |
-| `npm run scrape-aanbod` | Scraped aanbod (script) |
 | `npm run scrape-projecten` | Scraped projecten (script) |
 | `npm run lint` | Voert ESLint uit |
 

@@ -18,6 +18,8 @@ export interface ContentBlockImageLeftProps {
   extra?: string
   /** Maakt de volledige tegel klikbaar in plaats van alleen de tekstlink. */
   fullCardLink?: boolean
+  /** Opent de link in een nieuw tabblad (voor externe URL's). */
+  external?: boolean
 }
 
 export function ContentBlockImageLeft({
@@ -30,7 +32,11 @@ export function ContentBlockImageLeft({
   statusLabel,
   extra,
   fullCardLink = false,
+  external = false,
 }: ContentBlockImageLeftProps) {
+  const externalProps = external
+    ? { target: "_blank", rel: "noopener noreferrer" }
+    : {}
   const cardClassName =
     "group relative block overflow-hidden rounded-xl border border-border bg-card py-8 px-6 shadow-sm transition-all duration-300 lg:px-10 lg:py-10"
 
@@ -70,6 +76,7 @@ export function ContentBlockImageLeft({
         ) : (
           <Link
             href={linkHref}
+            {...externalProps}
             className="mt-4 inline-flex items-center text-sm font-medium text-primary underline decoration-dotted underline-offset-2 hover:text-accent"
           >
             {linkLabel}
@@ -83,6 +90,7 @@ export function ContentBlockImageLeft({
     return (
       <Link
         href={linkHref}
+        {...externalProps}
         className={`${cardClassName} hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
       >
         {content}

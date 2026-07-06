@@ -7,6 +7,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Twee keer per dag (05:00 en 17:00 UTC) zodat het LandEigenaar-aanbod actueel blijft
+    - cron: '0 5,17 * * *'
 
 permissions:
   contents: read

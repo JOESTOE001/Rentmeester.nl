@@ -1,19 +1,17 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { ContentBlockImageLeft } from "@/components/content-block-image-left"
-import { TOTAL_PAGES } from "@/data/aanbod"
 import {
-  getAanbodPage,
-  type AanbodItem,
+  getLandeigenaarAanbod,
   type AanbodStatus,
-} from "@/lib/aanbod"
+  type LandeigenaarPerceel,
+} from "@/lib/landeigenaar"
 
 export const metadata: Metadata = {
   title: "Aanbod | Bakker Rentmeesters",
   description:
-    "Actueel aanbod landelijk vastgoed: woonboerderijen, bospercelen, bouwgrond en agrarisch vastgoed.",
+    "Actueel aanbod van LandEigenaar: percelen agrarische grond, bos en natuur in heel Nederland.",
 }
 
 const statusLabels: Record<AanbodStatus, string> = {
@@ -24,7 +22,7 @@ const statusLabels: Record<AanbodStatus, string> = {
 
 const PLACEHOLDER_IMAGE = "/placeholder.svg"
 
-function AanbodCard({ item }: { item: AanbodItem }) {
+function AanbodCard({ item }: { item: LandeigenaarPerceel }) {
   const statusLabel = statusLabels[item.status]
   return (
     <ContentBlockImageLeft
@@ -32,57 +30,18 @@ function AanbodCard({ item }: { item: AanbodItem }) {
       imageAlt={item.title}
       title={item.title}
       excerpt={item.excerpt}
-      linkHref={`/aanbod/${item.slug}`}
-      linkLabel="Lees meer..."
+      linkHref={item.externalUrl}
+      linkLabel="Bekijk op LandEigenaar.nl"
       statusLabel={statusLabel || undefined}
       extra={item.extra}
       fullCardLink
+      external
     />
   )
 }
 
-function aanbodPaginationHref(page: number): string {
-  return page === 1 ? "/aanbod" : `/aanbod/page/${page}`
-}
-
-function Pagination({
-  currentPage,
-  totalPages,
-}: {
-  currentPage: number
-  totalPages: number
-}) {
-  if (totalPages <= 1) return null
-  return (
-    <nav
-      className="mt-12 flex flex-wrap items-center justify-center gap-2"
-      aria-label="Paginering"
-    >
-      <span className="mr-4 text-sm text-muted-foreground">
-        Pagina {currentPage} van {totalPages}
-      </span>
-      <div className="flex gap-1">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Link
-            key={page}
-            href={aanbodPaginationHref(page)}
-            className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-medium transition-colors ${
-              page === currentPage
-                ? "bg-accent text-accent-foreground"
-                : "bg-muted text-muted-foreground hover:bg-secondary hover:text-foreground"
-            }`}
-          >
-            {page}
-          </Link>
-        ))}
-      </div>
-    </nav>
-  )
-}
-
 export default async function AanbodPage() {
-  const page = 1
-  const items = await getAanbodPage(page)
+  const items = await getLandeigenaarAanbod()
 
   return (
     <main className="min-h-screen bg-transparent">
@@ -94,8 +53,9 @@ export default async function AanbodPage() {
               Aanbod
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Actueel aanbod landelijk vastgoed van Bakker Rentmeesters &
-              Makelaars.
+              Actueel aanbod van LandEigenaar: percelen agrarische grond, bos
+              en natuur. Klik op een perceel voor alle details op
+              LandEigenaar.nl.
             </p>
           </div>
 
@@ -106,8 +66,6 @@ export default async function AanbodPage() {
               </li>
             ))}
           </ul>
-
-          <Pagination currentPage={page} totalPages={TOTAL_PAGES} />
         </div>
       </div>
       <Footer />

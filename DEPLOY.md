@@ -17,9 +17,9 @@ Zorg dat op de server (bijv. `/var/www/rentmeester`) **de volledige projectstruc
 
 | Nodig voor de site |
 |--------------------|
-| `content/` (alle .md in `content/aanbod/`) |
-| `data/` (o.a. `aanbod.ts`, `projecten.ts`, `nieuws.ts`) |
-| `lib/` (o.a. `aanbod.ts`, `aanbod-content.ts`) |
+| `content/` (markdown-content, bijv. projecten) |
+| `data/` (o.a. `projecten.ts`, `nieuws.ts`) |
+| `lib/` (o.a. `landeigenaar.ts`) |
 | `public/` (favicon, logo’s, placeholder.svg) |
 | `src/` (alle app- en componentcode) |
 | `package.json`, `next.config.mjs`, `postcss.config.mjs`, `tsconfig.json` |
@@ -28,7 +28,7 @@ Zorg dat op de server (bijv. `/var/www/rentmeester`) **de volledige projectstruc
 
 Dus: **niet** alleen `.next` + `node_modules` deployen; ook `content/`, `data/`, `lib/` en de rest van de repo.
 
-**Verwachte boom** (projectroot = bijv. `/var/www/rentmeester`): naast `src/` moeten op hetzelfde niveau staan: `content/`, `content/aanbod/` (met .md), `data/`, `lib/`, `components/`, `hooks/`, `public/`, `scripts/`. De tsconfig heeft `"@/*": ["./*"]`, dus `@/data` = `./data`, `@/lib` = `./lib`, etc.
+**Verwachte boom** (projectroot = bijv. `/var/www/rentmeester`): naast `src/` moeten op hetzelfde niveau staan: `content/`, `data/`, `lib/`, `components/`, `hooks/`, `public/`, `scripts/`. De tsconfig heeft `"@/*": ["./*"]`, dus `@/data` = `./data`, `@/lib` = `./lib`, etc.
 
 **Structuur controleren op de server:**
 ```bash
@@ -40,7 +40,7 @@ Het script meldt "OK" of "ONVOLLEDIG" en wat er ontbreekt.
 
 ## 3. Build-check
 
-Bij `npm run build` wordt gecontroleerd of `content/aanbod/` bestaat en .md-bestanden bevat. Als dat op de server niet zo is, faalt de build. Zo zie je direct dat de content-map ontbreekt of op de verkeerde plek staat.
+Het aanbod op `/aanbod` wordt tijdens `npm run build` opgehaald uit de LandEigenaar API. Als de API niet bereikbaar is, faalt de build; de laatst gedeployde versie blijft dan online.
 
 ## 4. Typische deploy-stappen op de server
 
@@ -50,7 +50,7 @@ cd /var/www/rentmeester
 git pull   # of bestanden op een andere manier updaten
 
 npm ci
-npm run build   # faalt als content/aanbod/ ontbreekt
+npm run build   # faalt als de LandEigenaar API niet bereikbaar is
 npm run start   # of: pm2 start npm --name "rentmeester" -- start
 ```
 
@@ -62,7 +62,7 @@ Controleer:
 
 1. **Zelfde code:** zelfde branch/commit als lokaal?
 2. **Zelfde map:** wordt `npm run build` en `npm run start` uitgevoerd in de map waar ook `content/`, `data/` en `lib/` staan?
-3. **Content aanwezig:** `ls content/aanbod/` toont .md-bestanden?
+3. **API bereikbaar:** kan de server `https://landeigenaar.nl/api/properties/` bereiken tijdens de build?
 4. **Geen oude cache:** eventueel `rm -rf .next` en opnieuw `npm run build`.
 
 Als dit allemaal klopt, zou de site op de server hetzelfde moeten zijn als lokaal.
