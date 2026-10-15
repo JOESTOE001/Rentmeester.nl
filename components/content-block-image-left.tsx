@@ -43,6 +43,14 @@ export function ContentBlockImageLeft({
   const externalProps = external
     ? { target: "_blank", rel: "noopener noreferrer" }
     : {}
+  const statusToneClass =
+    statusTone === "te-koop"
+      ? "bg-accent text-accent-foreground"
+      : statusTone === "verkocht-onder-voorbehoud"
+        ? "bg-yellow-400 text-yellow-950"
+        : statusTone === "verkocht"
+          ? "bg-red-600 text-white"
+          : "bg-muted text-muted-foreground"
   const cardClassName =
     "group relative block overflow-hidden rounded-xl border border-border bg-card py-8 px-6 shadow-sm transition-all duration-300 lg:px-10 lg:py-10"
 
@@ -63,13 +71,7 @@ export function ContentBlockImageLeft({
       <div className="flex min-w-0 flex-col justify-center">
         {statusLabel && (
           <span
-            className={`mb-2 inline-block w-fit rounded-full px-3 py-1 text-xs font-medium ${
-              statusTone === "te-koop"
-                ? "bg-accent text-accent-foreground"
-                : statusTone === "verkocht-onder-voorbehoud"
-                  ? "bg-muted text-foreground"
-                  : "bg-muted text-muted-foreground"
-            }`}
+            className={`mb-2 inline-block w-fit rounded-full px-3 py-1 text-xs font-medium ${statusToneClass}`}
           >
             {statusLabel}
           </span>

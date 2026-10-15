@@ -70,11 +70,17 @@ const STATUS_ORDER: Record<AanbodStatus, number> = {
   verkocht: 2,
 }
 
+/** Kadastrale notatie: hectare.are.centiare, bijv. 1,981 ha → 1.98.10 ha. */
 function formatArea(area: string | null): string | null {
   if (!area) return null
   const ha = Number.parseFloat(area)
   if (!Number.isFinite(ha) || ha <= 0) return null
-  return `${ha.toLocaleString("nl-NL", { maximumFractionDigits: 4 })} ha`
+  const totalCentiare = Math.round(ha * 10000)
+  const hectares = Math.floor(totalCentiare / 10000)
+  const ares = Math.floor((totalCentiare % 10000) / 100)
+  const centiare = totalCentiare % 100
+  const pad = (value: number) => value.toString().padStart(2, "0")
+  return `${hectares}.${pad(ares)}.${pad(centiare)} ha`
 }
 
 function formatPrice(price: number | null, priceDesc: string | null): string | null {
