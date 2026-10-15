@@ -8,12 +8,16 @@ export interface ContentBlockImageLeftProps {
   /** Titel (wordt in groen, vet, hoofdletters getoond) */
   title: string
   /** Korte beschrijving */
-  excerpt: string
+  excerpt?: string
+  /** Feiten als opsomming, in plaats van lopende tekst. */
+  points?: string[]
   /** Link naar detailpagina (bijv. /aanbod/[slug]) */
   linkHref: string
   linkLabel?: string
-  /** Optioneel: statuslabel (bijv. "verkocht") */
+  /** Optioneel: statuslabel (bijv. "Te koop") */
   statusLabel?: string
+  /** Kleur van het statuslabel. */
+  statusTone?: "te-koop" | "verkocht-onder-voorbehoud" | "verkocht"
   /** Optioneel: extra regel tekst */
   extra?: string
   /** Maakt de volledige tegel klikbaar in plaats van alleen de tekstlink. */
@@ -27,9 +31,11 @@ export function ContentBlockImageLeft({
   imageAlt,
   title,
   excerpt,
+  points,
   linkHref,
   linkLabel = "Lees meer...",
   statusLabel,
+  statusTone,
   extra,
   fullCardLink = false,
   external = false,
@@ -56,17 +62,33 @@ export function ContentBlockImageLeft({
       {/* Rechts: tekst */}
       <div className="flex min-w-0 flex-col justify-center">
         {statusLabel && (
-          <span className="mb-2 inline-block w-fit rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span
+            className={`mb-2 inline-block w-fit rounded-full px-3 py-1 text-xs font-medium ${
+              statusTone === "te-koop"
+                ? "bg-accent text-accent-foreground"
+                : statusTone === "verkocht-onder-voorbehoud"
+                  ? "bg-muted text-foreground"
+                  : "bg-muted text-muted-foreground"
+            }`}
+          >
             {statusLabel}
           </span>
         )}
         <h2 className="font-sans text-lg font-bold uppercase tracking-wide text-accent lg:text-xl">
           {title}
         </h2>
-        {excerpt && (
-          <p className="mt-3 text-base leading-relaxed text-foreground">
-            {excerpt}
-          </p>
+        {points && points.length > 0 ? (
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-base leading-relaxed text-foreground marker:text-accent">
+            {points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+        ) : (
+          excerpt && (
+            <p className="mt-3 text-base leading-relaxed text-foreground">
+              {excerpt}
+            </p>
+          )
         )}
         {extra && <p className="mt-1 text-sm text-muted-foreground">{extra}</p>}
         {fullCardLink ? (

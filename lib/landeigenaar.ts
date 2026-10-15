@@ -1,3 +1,5 @@
+import { get } from "node:https"
+
 const API_URL = "https://landeigenaar.nl/api/properties/?provider=LandEigenaar"
 
 export type AanbodStatus = "te-koop" | "verkocht" | "verkocht-onder-voorbehoud"
@@ -7,9 +9,8 @@ export interface LandeigenaarPerceel {
   title: string
   location: string
   province: string
-  excerpt: string
-  /** Bijv. "0,067 ha · € 3.750" */
-  extra: string
+  /** Korte feiten voor op de kaart, als opsomming. */
+  points: string[]
   status: AanbodStatus
   image: string | null
   /** Detailpagina op landeigenaar.nl (openen in nieuw tabblad) */
@@ -30,6 +31,9 @@ interface ApiProperty {
   province: string | null
   is_active: boolean
   manual_description: string | null
+  bestemming_naam: string | null
+  updated_at: string | null
+  is_hidden?: boolean
 }
 
 interface ApiResponse {
@@ -80,33 +84,133 @@ function formatPrice(price: number | null, priceDesc: string | null): string | n
   return priceDesc || null
 }
 
-/** Strip HTML-tags uit manual_description voor een korte kaarttekst. */
-function toExcerpt(html: string | null, maxLength = 180): string {
-  if (!html) return ""
-  const text = html
-    .replace(/<br\s*\/?>/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-  if (text.length <= maxLength) return text
-  return `${text.slice(0, maxLength).replace(/\s+\S*$/, "")}…`
+function decodeHtml(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0?39;|&apos;/gi, "'")
+    .replace(/&euro;/gi, "€")
+    .replace(/&sup2;/gi, "²")
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(parseInt(code, 16)))
+    .replace(/&amp;/gi, "&")
+}
+
+function plainText(html: string): string {
+  return decodeHtml(html.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()
+}
+
+/** Kenmerken uit de beschrijving: <li>-items, anders regels die met een streepje beginnen. */
+function extractFeatureBullets(html: string | null): string[] {
+  if (!html) return []
+
+  const listItems = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+    .map((match) => plainText(match[1]))
+    .filter(Boolean)
+  if (listItems.length > 0) return listItems
+
+  const lines = decodeHtml(
+    html
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+  )
+    .split("\n")
+    .map((line) => line.trim())
+
+  return lines
+    .filter((line) => /^[-•–]\s+\S/.test(line))
+    .map((line) => line.replace(/^[-•–]\s+/, "").trim())
+    .filter(Boolean)
+}
+
+function mentionsPrice(text: string): boolean {
+  return /vraagprijs|prijs op aanvraag|€|\beur\b/i.test(text)
+}
+
+function mentionsArea(text: string): boolean {
+  return /oppervlakte|\bha\b|m²|m2/i.test(text)
+}
+
+const MAX_POINTS = 8
+
+function uniquePoints(points: string[]): string[] {
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const point of points) {
+    const key = point.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push(point)
+    if (result.length >= MAX_POINTS) break
+  }
+  return result
+}
+
+function toPoints(item: ApiProperty, provinceName: string): string[] {
+  const area = formatArea(item.area)
+  const price = formatPrice(item.price, item.price_desc)
+  const features = extractFeatureBullets(item.manual_description)
+  const featureText = features.join(" ")
+
+  if (features.length > 0) {
+    const points: string[] = []
+    if (area && !mentionsArea(featureText)) points.push(area)
+    if (price && !mentionsPrice(featureText)) points.push(price)
+    points.push(...features)
+    return uniquePoints(points)
+  }
+
+  const location = [item.location, provinceName].filter(Boolean).join(", ")
+  const bestemming = item.bestemming_naam?.trim() || ""
+  return uniquePoints(
+    [area, price, bestemming, location].filter((point): point is string => Boolean(point))
+  )
 }
 
 function mapProperty(item: ApiProperty): LandeigenaarPerceel {
-  const parts = [formatArea(item.area), formatPrice(item.price, item.price_desc)]
-  const provinceName = item.province ? PROVINCE_NAMES[item.province] ?? item.province : ""
+  const provinceName = item.province ? PROVINCE_NAMES[item.province] ?? "" : ""
 
   return {
     id: item.id,
     title: item.title,
     location: item.location ?? "",
     province: provinceName,
-    excerpt: toExcerpt(item.manual_description),
-    extra: parts.filter(Boolean).join(" · "),
+    points: toPoints(item, provinceName),
     status: STATUS_MAP[item.status] ?? "te-koop",
     image: item.image_urls?.[0] ?? item.image_url ?? null,
     externalUrl: `https://landeigenaar.nl/perceel/${item.id}`,
   }
+}
+
+/** Node-https, niet de gecachte Next-fetch: die maakt /aanbod dynamisch en breekt de statische export. */
+function fetchJson(url: string): Promise<ApiResponse> {
+  return new Promise((resolve, reject) => {
+    const req = get(url, (res) => {
+      const status = res.statusCode ?? 0
+      if (status >= 300 && status < 400 && res.headers.location) {
+        res.resume()
+        const nextUrl = new URL(res.headers.location, url).href
+        resolve(fetchJson(nextUrl))
+        return
+      }
+      if (status < 200 || status >= 300) {
+        res.resume()
+        reject(new Error(`LandEigenaar API gaf status ${status} voor ${url}. Build afgebroken.`))
+        return
+      }
+      const chunks: Buffer[] = []
+      res.on("data", (chunk: Buffer) => chunks.push(chunk))
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")) as ApiResponse)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    })
+    req.on("error", reject)
+  })
 }
 
 /**
@@ -119,19 +223,19 @@ export async function getLandeigenaarAanbod(): Promise<LandeigenaarPerceel[]> {
   let url: string | null = API_URL
 
   while (url) {
-    const res = await fetch(url)
-    if (!res.ok) {
-      throw new Error(
-        `LandEigenaar API gaf status ${res.status} voor ${url}. Build afgebroken.`
-      )
-    }
-    const data = (await res.json()) as ApiResponse
+    const data = await fetchJson(url)
     items.push(...data.results)
     url = data.next
   }
 
   return items
-    .filter((item) => item.is_active !== false)
+    .filter((item) => item.is_active !== false && !item.is_hidden)
+    .sort((a, b) => {
+      const statusDelta =
+        STATUS_ORDER[STATUS_MAP[a.status] ?? "te-koop"] -
+        STATUS_ORDER[STATUS_MAP[b.status] ?? "te-koop"]
+      if (statusDelta !== 0) return statusDelta
+      return (b.updated_at ?? "").localeCompare(a.updated_at ?? "")
+    })
     .map(mapProperty)
-    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status])
 }

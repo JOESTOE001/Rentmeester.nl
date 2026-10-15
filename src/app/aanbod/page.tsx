@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 }
 
 const statusLabels: Record<AanbodStatus, string> = {
-  "te-koop": "",
-  verkocht: "verkocht",
-  "verkocht-onder-voorbehoud": "verkocht onder voorbehoud",
+  "te-koop": "Te koop",
+  verkocht: "Verkocht",
+  "verkocht-onder-voorbehoud": "Verkocht onder voorbehoud",
 }
 
 const PLACEHOLDER_IMAGE = "/placeholder.svg"
@@ -29,11 +29,11 @@ function AanbodCard({ item }: { item: LandeigenaarPerceel }) {
       imageSrc={item.image ?? PLACEHOLDER_IMAGE}
       imageAlt={item.title}
       title={item.title}
-      excerpt={item.excerpt}
+      points={item.points}
       linkHref={item.externalUrl}
       linkLabel="Bekijk op LandEigenaar.nl"
-      statusLabel={statusLabel || undefined}
-      extra={item.extra}
+      statusLabel={statusLabel}
+      statusTone={item.status}
       fullCardLink
       external
     />
