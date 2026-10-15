@@ -1,15 +1,11 @@
-# Deploy Astro site naar GitHub Pages via GitHub Actions
-# In repo: Settings → Pages → Source: "GitHub Actions"
+# Vervangen door .github/workflows/astro.yml (push) en
+# .github/workflows/refresh-aanbod.yml (schema). Dit bestand blijft staan
+# zodat een oude, uitgezette workflow niet per ongeluk een tweede deploy start.
 
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (legacy)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
-  schedule:
-    # Twee keer per dag (05:00 en 17:00 UTC) zodat het LandEigenaar-aanbod actueel blijft
-    - cron: '0 5,17 * * *'
 
 permissions:
   contents: read
